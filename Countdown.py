@@ -95,6 +95,13 @@ def allsolutions(A,target):
       print(x,"=",t)
 
 
+def countallexpressions(A):
+  count=0
+  for (x,t,o,a,b) in expressions(A):
+    count+=1
+  return count  
+
+
 # find how many targets in the range 101..999 are covered
 def numtargets(A):
   results=set()
@@ -146,17 +153,36 @@ if __name__=='__main__':
   print("Test random combinations of 2 top + 4 bottom")
   top2 = [ x for x in combinations([25,50,75,100],2)]
   bottom4 = [ x for x in combinations(list(range(1,11))+list(range(1,11)),4)]
+  print( "cards\ttargets\texpressions\texp/target")
   for _ in range(10):
     A= list(top2[RI(0,len(top2)-1)] + bottom4[RI(0,len(bottom4)-1)])
     c,n = counttargets(A)
-    print(A,"covers", n ,"targets with",c,"expressions,",round(c/n,1),"expressions/target")          
+    print(A,"\t", n ,"\t",c,"\t",round(c/n,1))          
 
   print("Test random combinations of 1 top + 5 bottom")
   bottom5 = [ x for x in combinations(list(range(1,11))+list(range(1,11)),5)]
+  print( "cards\ttargets\texpressions\texp/target")
   for _ in range(10):
     A=[RI(1,4)*25]+ list(bottom5[RI(0,len(bottom5)-1)])
     c,n = counttargets(A)
-    print(A,"covers", n ,"targets with",c,"expressions,",round(c/n,1),"expressions/target")          
+    print(A,"\t", n ,"\t",c,"\t",round(c/n,1))          
+
+  print("Test random combinations of 2 top + 4 bottom - all expressions")
+  top2 = [ x for x in combinations([25,50,75,100],2)]
+  bottom4 = [ x for x in combinations(list(range(1,11))+list(range(1,11)),4)]
+  print( "cards\ttargets\texpressions\texp/target")
+  for _ in range(10):
+    A= list(top2[RI(0,len(top2)-1)] + bottom4[RI(0,len(bottom4)-1)])
+    c = countallexpressions(A)
+    print(A,"\t",c)          
+
+  print("Test random combinations of 1 top + 5 bottom - all expressions")
+  bottom5 = [ x for x in combinations(list(range(1,11))+list(range(1,11)),5)]
+  print( "cards\ttargets\texpressions\texp/target")
+  for _ in range(10):
+    A=[RI(1,4)*25]+ list(bottom5[RI(0,len(bottom5)-1)])
+    c = countallexpressions(A)
+    print(A,"\t",c)          
 
   # these cover all targets 101..999
   alltargets([75,5,6,7,8,9])
