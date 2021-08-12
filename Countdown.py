@@ -29,20 +29,21 @@ def expressions( A, processed=set() ):
   if A[0][0]==0:
     return
   
-  for p1, p2 in combinations(list(range(len(A))),2):
+  for p1, p2 in combinations(range(len(A)),2):
 
     p1,p2 = sorted((p1,p2))
     
     n1,t1,o1,x1,y1 = A[p1]
     n2,t2,o2,x2,y2 = A[p2]
 
+    # construct B, a copy of A without the 2 selected items
     B= A[:]
     B.pop(p2)
     B.pop(p1)
 
     # don't process x/(y/z) as (x*z)/y produces the same answer
     # don't process x/(y*z) as x/y/z produces the same answer
-    if n2 != 0 and n1%n2==0 and o2 not in ('*','/'):
+    if n2 != 0 and n2 != 1 and n1%n2==0 and o2 not in ('*','/'):
       C=[(n1//n2, wrap(t1,o1 not in ('',))+ '÷' +wrap(t2,o2!=''),"/",n1,n2)]
       for x in expressions(C+B, processed):
         yield x
@@ -57,7 +58,7 @@ def expressions( A, processed=set() ):
     if o2!='/' and o1!='/' and n2!=1 and n1!=1:
       # don't process x*(y*z) if (x>y or x>z)
       if not(o2=='*' and (n1>x2 or n1>y2)):
-        C= [(n1*n2,wrap(t1,o1 not in ('','*'))+'×'+wrap(t2,o2 not in ('','*')),"*",n1,n2)]
+        C = [(n1*n2,wrap(t1,o1 not in ('','*'))+'×'+wrap(t2,o2 not in ('','*')),"*",n1,n2)]
         for x in expressions(C+B, processed):
           yield x
 
