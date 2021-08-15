@@ -4,25 +4,35 @@ from itertools import combinations
 def wrap(t, condition=True):
     return ''.join(["(",t,")"]) if condition else t
 
+dup1=0
+dup2=0
+
 #@profile
 def expressions( A, processed=set() ):
+  global dup1,dup2
   # initially, A is an array of numbers
   # In recursive calls, A is an array of tuples (n,t,o,x,y) where n in a number,
   # t is a text expression of n, o is the last operation applied to x,y to produce n = xoy
 
   if type(A[0])==int: # inital call, so convert to array of tuples
     A = [ (A[i],str(A[i]),"",0,0) for i in range(len(A))]
-    processed=set()
+    processed.clear()
   else: # recursive call, so return the expression formed in the parent
+    #print ("  "*(6-len(A)), [A[i][1] for i in range(len(A) ) ] )
     n,t,o,x,y = A[0]
     if (n,t) not in processed:
       yield A[0]
       processed.add( (n,t) )
-
+    else:
+      dup1+=1  
+      #print( "already processed", t ) 
+  
   A.sort()
   #print len(A), [(x,t) for x,t,o,a,b in A]
   tA=tuple(A)
   if tA in processed:
+    #print ("already processed", [x[1] for x in tA], len(tA))
+    dup2+=1
     return
   processed.add(tA)
 
@@ -41,9 +51,10 @@ def expressions( A, processed=set() ):
     B.pop(p2)
     B.pop(p1)
 
+    ################ Division ################
     # don't process x/(y/z) as (x*z)/y produces the same answer
     # don't process x/(y*z) as x/y/z produces the same answer
-    if n2 != 0 and n2 != 1 and n1%n2==0 and o2 not in ('*','/'):
+    if n2 != 0 and n2  != 1  and n1%n2==0 and o2 not in ('*','/'):
       C=[(n1//n2, wrap(t1,o1 not in ('',))+ '÷' +wrap(t2,o2!=''),"/",n1,n2)]
       for x in expressions(C+B, processed):
         yield x
@@ -53,6 +64,7 @@ def expressions( A, processed=set() ):
       for x in expressions(C+B, processed):
         yield x
 
+    ################ Multiplication ################
     # don't process x*(y/z), as (x*y)/z produces the same answer
     # don't process (x/y)*z as (x*z)/y produces the same answer
     if o2!='/' and o1!='/' and n2!=1 and n1!=1:
@@ -62,6 +74,7 @@ def expressions( A, processed=set() ):
         for x in expressions(C+B, processed):
           yield x
 
+    ################ Subtraction ################
     # don't process x-(y-z), as x+y-z produces the same answer
     # don't process x-(y+z), as x-y-z produces the same answer
     # don't process (x-y)-z if  y>z.  x-z-y produces the same answer
@@ -79,23 +92,28 @@ def expressions( A, processed=set() ):
             yield x
     
 
+    ################ Addition ################
     # don't process x+(y-z), as (x+y)-z produces the same answer
     # don't process (x-z)+y, as (x+y)-z produces the same answer
     if o1!='-' and o2!='-':
       # don't process x+(y+z) if (x>z or x>y)
       if not( o2=='+' and (n1>x2 or n1>y2)):
-        C=[(n1+n2,wrap(t1,False)+"+"+wrap(t2,False),"+",n1,n2)]
-        for x in expressions(C+B, processed):
-          yield x
+        # don't process (x+y)+z if (x>z or y>z)
+        if not( o1=='+' and (x1>n2 or y1>n2)):
+            C=[(n1+n2, t1+"+"+t2, "+", n1, n2)]
+            for x in expressions(C+B, processed):
+              yield x
 #---------------------------------------------------------------------
 
 # find all the solutions matching a target          
 def allsolutions(A,target):
+  global dup1,dup2
+  dup1=0
+  dup2=0
   for (x,t,o,a,b) in expressions(A):
     if x==target:
       print(x,"=",t)
-
-
+  
 def countallexpressions(A):
   count=0
   for (x,t,o,a,b) in expressions(A):
@@ -140,50 +158,33 @@ if __name__=='__main__':
   
   print("The James Martin 952 game, https://www.youtube.com/watch?v=6mCgiaAFCu8")
   allsolutions([100,75,50,25,6,3], 952)
+
+  print("The algorithm doesn't eliminate all duplicates:")
+  print("for example addition in multiple orders")
+  for (x,s,o,a,b) in expressions( [1,2,4,8,16,32] ):
+    if x==63:
+      if s.count('+')==5:
+        print (x,"=",s)
   
-  print("The easiset game ever? https://www.youtube.com/watch?v=d3I2lafp9LY")
+  print("and multiplication in multiple orders")
+  for (x,s,o,a,b) in expressions( [2,4,8,16,32,64] ):
+    if x==2**21:
+      print (x,"=",s)
+
+
+  print("\nThe easiset game ever? https://www.youtube.com/watch?v=d3I2lafp9LY")
   allsolutions([1,4,8,9,10,50], 500) 
 
-  print("These only have a few solutions each")
-  allsolutions([50,25,1,7,10,10], 976) 
-  allsolutions([100,75,1,1,3,5], 862) 
-  allsolutions([50,75,2,5,5,6], 977) 
-  allsolutions([100,50,10,10,7,1], 284) 
-  allsolutions([75,25,1,4,6,10], 632) 
+  print("\nThese only have a few solutions each")
+  for numbers, target in (
+      ([50,25,1,7,10,10], 976) ,
+      ([100,75,1,1,3,5], 862) ,
+      ([50,75,2,5,5,6], 977) ,
+      ([100,50,10,10,7,1], 284) ,
+      ([75,25,1,4,6,10], 632) ):
+    print ("\nSolutions for", numbers,", target", target)
+    allsolutions(numbers,target)
       
-  print("Test random combinations of 2 top + 4 bottom")
-  top2 = [ x for x in combinations([25,50,75,100],2)]
-  bottom4 = [ x for x in combinations(list(range(1,11))+list(range(1,11)),4)]
-  print( "cards\ttargets\texpressions\texp/target")
-  for _ in range(10):
-    A= list(top2[RI(0,len(top2)-1)] + bottom4[RI(0,len(bottom4)-1)])
-    c,n = counttargets(A)
-    print(A,"\t", n ,"\t",c,"\t",round(c/n,1))          
-
-  print("Test random combinations of 1 top + 5 bottom")
-  bottom5 = [ x for x in combinations(list(range(1,11))+list(range(1,11)),5)]
-  print( "cards\ttargets\texpressions\texp/target")
-  for _ in range(10):
-    A=[RI(1,4)*25]+ list(bottom5[RI(0,len(bottom5)-1)])
-    c,n = counttargets(A)
-    print(A,"\t", n ,"\t",c,"\t",round(c/n,1))          
-
-  print("Test random combinations of 2 top + 4 bottom - all expressions")
-  top2 = [ x for x in combinations([25,50,75,100],2)]
-  bottom4 = [ x for x in combinations(list(range(1,11))+list(range(1,11)),4)]
-  print( "cards\ttargets\texpressions\texp/target")
-  for _ in range(10):
-    A= list(top2[RI(0,len(top2)-1)] + bottom4[RI(0,len(bottom4)-1)])
-    c = countallexpressions(A)
-    print(A,"\t",c)          
-
-  print("Test random combinations of 1 top + 5 bottom - all expressions")
-  bottom5 = [ x for x in combinations(list(range(1,11))+list(range(1,11)),5)]
-  print( "cards\ttargets\texpressions\texp/target")
-  for _ in range(10):
-    A=[RI(1,4)*25]+ list(bottom5[RI(0,len(bottom5)-1)])
-    c = countallexpressions(A)
-    print(A,"\t",c)          
 
   # these cover all targets 101..999
   alltargets([75,5,6,7,8,9])
