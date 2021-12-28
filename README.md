@@ -5,6 +5,6 @@ Countdown is a game show, described here: https://en.wikipedia.org/wiki/Countdow
 
 The program produces all the solutions to a numbers game, and analyses some statistics relating to the solutions generated
 
-The program eliminates most duplicate entries, and eliminates frivolous solutions that invove multipying or deviding by one, or adding or suptracting zero.
+The program eliminates most duplicate entries, and eliminates frivolous solutions that invove multipying or dividing by one, or adding or subtracting zero.
 
 A small number of duplicates slip through when there are long strings of additions or multiplications, e.g. a+b+c+d and b+a+c+d might both appear in solutions.
